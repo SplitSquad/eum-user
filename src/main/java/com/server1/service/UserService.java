@@ -39,6 +39,8 @@ public class UserService {
 
         user.setName(req.getName());
         user.setAddress(req.getAddress());
+        user.setBirthday(req.getBirthday());
+        user.setPhoneNumber(req.getPhoneNumber());
         user = userRepository.save(user);
 
         UserPreferenceEntity pref = prefRepository.findByUser(user)
@@ -62,6 +64,8 @@ public class UserService {
                 user.getUserId(),
                 user.getEmail(),
                 user.getName(),
+                user.getPhoneNumber(),
+                user.getBirthday(),
                 user.getProfileImagePath(),
                 user.getAddress(),
                 user.getSignedAt(),

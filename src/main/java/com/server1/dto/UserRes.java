@@ -12,6 +12,8 @@ public class UserRes {
     private Long userId;
     private String email;
     private String name;
+    private String phoneNumber;
+    private String birthday;
     private String profileImagePath;
     private String address;
     private LocalDateTime signedAt;
@@ -23,6 +25,8 @@ public class UserRes {
                 entity.getUserId(),
                 entity.getEmail(),
                 entity.getName(),
+                entity.getPhoneNumber(),
+                entity.getBirthday(),
                 entity.getProfileImagePath(),
                 entity.getAddress(),
                 entity.getSignedAt(),

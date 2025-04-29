@@ -25,6 +25,8 @@ public class UserEntity {
     @Column(nullable = false)
     private String role;
 
+    private String phoneNumber;
+    private String birthday;
     private String profileImagePath;
     private String address;
     private LocalDateTime signedAt;

@@ -1,6 +1,7 @@
 package com.server1.service;
 
 import com.server1.dto.*;
+import org.springframework.beans.factory.config.Scope;
 import util.JwtUtil;
 import com.server1.entity.UserEntity;
 import com.server1.entity.UserPreferenceEntity;
@@ -32,8 +33,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -60,9 +64,8 @@ public class AuthService {
     @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
     private String redirectUri;
 
-
     public String generateGoogleAuthUrl() {
-        String scope = "email profile https://www.googleapis.com/auth/calendar";
+        String scope = "email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.birthday.read";
         return "https://accounts.google.com/o/oauth2/v2/auth" +
                 "?client_id=" + googleClientId +
                 "&redirect_uri=" + redirectUri +
@@ -72,6 +75,40 @@ public class AuthService {
                 "&scope=" + scope +
                 "&prompt=consent";
     }
+
+    private Map<String, String> getPhoneAndBirthday(String accessToken) {
+        try {
+            URL url = new URL("https://people.googleapis.com/v1/people/me?personFields=phoneNumbers,birthdays");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> response = mapper.readValue(conn.getInputStream(), Map.class);
+
+            String phoneNumber = ((List<Map<String, Object>>) response.getOrDefault("phoneNumbers", List.of()))
+                    .stream().findFirst()
+                    .map(phone -> (String) phone.get("value"))
+                    .orElse("");
+
+            String birthday = ((List<Map<String, Object>>) response.getOrDefault("birthdays", List.of()))
+                    .stream().findFirst()
+                    .map(b -> {
+                        Map<String, Object> date = (Map<String, Object>) b.get("date");
+                        if (date == null) return "";
+                        int year = (int) date.getOrDefault("year", 0);
+                        int month = (int) date.getOrDefault("month", 0);
+                        int day = (int) date.getOrDefault("day", 0);
+                        return String.format("%04d-%02d-%02d", year, month, day);
+                    }).orElse("");
+
+            return Map.of("phoneNumber", phoneNumber, "birthday", birthday);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("phoneNumber", "", "birthday", "");
+        }
+    }
+
 
     public TokenRes login(String code, HttpServletResponse res) {
         try {
@@ -91,6 +128,10 @@ public class AuthService {
             String pictureUrl = (String) idToken.getPayload().get("picture");
             String googleRefreshToken = tokenResponse.getRefreshToken();
 
+            Map<String, String> phoneAndBirthday = getPhoneAndBirthday(tokenResponse.getAccessToken());
+            String phoneNumber = phoneAndBirthday.get("phoneNumber");
+            String birthday = phoneAndBirthday.get("birthday");
+
             boolean isNewUser = false;
 
             Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
@@ -98,12 +139,17 @@ public class AuthService {
 
             if (optionalUser.isPresent()) {
                 user = optionalUser.get();
+                user.setPhoneNumber(phoneNumber);
+                user.setBirthday(birthday);
+                userRepository.save(user);
             } else {
                 user = userRepository.save(UserEntity.builder()
                         .email(email)
                         .name(name)
-                        .signedAt(LocalDateTime.now())
                         .profileImagePath(pictureUrl)
+                        .phoneNumber(phoneNumber)
+                        .birthday(birthday)
+                        .signedAt(LocalDateTime.now())
                         .isDeactivate(false)
                         .role("ROLE_USER")
                         .build());
@@ -179,7 +225,7 @@ public class AuthService {
             }
         }
         if (refreshToken == null) {
-            throw new ResponseStatusException(UNAUTHORIZED, "Refresh token not found");
+            throw new ResponseStatusException(UNAUTHORIZED, "Refresh 없음");
         }
 
         try {

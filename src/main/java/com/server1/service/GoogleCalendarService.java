@@ -168,7 +168,7 @@ public class GoogleCalendarService {
         
         String refreshToken = redisUtil.getRefreshToken(email);
         if (refreshToken == null) {
-            throw new RuntimeException("Refresh token not found");
+            throw new RuntimeException("Refresh 토큰 만료");
         }
 
         // refreshToken을 이용해 accessToken 갱신
