@@ -26,7 +26,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: localhost
+      host: ${REDIS_URL}
       port: 6379
   jpa:
     hibernate:
@@ -52,10 +52,6 @@ jwt:
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION}
 
 eureka:
-  instance:
-    prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: localhost
   client:
     register-with-eureka: true
     fetch-registry: true
