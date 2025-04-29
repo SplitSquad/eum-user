@@ -1,0 +1,33 @@
+package com.server1.dto;
+
+import com.server1.entity.UserEntity;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+
+@Getter
+@AllArgsConstructor
+public class UserRes {
+    private Long userId;
+    private String email;
+    private String name;
+    private String profileImagePath;
+    private String address;
+    private LocalDateTime signedAt;
+    private Boolean isDeactivate;
+    private String role;
+
+    public static UserRes from(UserEntity entity) {
+        return new UserRes(
+                entity.getUserId(),
+                entity.getEmail(),
+                entity.getName(),
+                entity.getProfileImagePath(),
+                entity.getAddress(),
+                entity.getSignedAt(),
+                entity.getIsDeactivate(),
+                entity.getRole()
+        );
+    }
+}

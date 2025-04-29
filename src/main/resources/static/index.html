@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>OAuth 테스트</title>
+    <style>
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .login {
+            background-color: #34a853;
+            color: white;
+        }
+        .logout {
+            background-color: #db4437;
+            color: white;
+        }
+        .info {
+            background-color: #4285f4;
+            color: white;
+        }
+        .lang {
+            background-color: #fbbc05;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 로그인 버튼 -->
+<button class="btn login" onclick="goToGoogleLogin()">Google 로그인</button>
+
+<!-- 내 정보 버튼 -->
+<button class="btn info" onclick="window.location.href='profile.html'">내 정보</button>
+
+<!-- 캘린더 조회 버튼 -->
+<button class="btn info" onclick="getCalendarEvents()">📅 내 캘린더 일정 보기</button>
+
+<!-- 로그아웃 버튼 -->
+<button class="btn logout" onclick="logout()">로그아웃</button>
+
+<!-- 회원 탈퇴 버튼 -->
+<button class="btn logout" onclick="deleteUser()">회원 탈퇴</button>
+
+<!-- 언어 설정 버튼 -->
+<button class="btn lang" onclick="setLanguage('KR')">한국어</button>
+<button class="btn lang" onclick="setLanguage('EN')">English</button>
+
+<pre id="result"></pre>
+
+<script>
+    const API_BASE_URL = 'http://localhost:8080';
+    let isLoginRequestInProgress = false;
+
+    async function goToGoogleLogin() {
+        if (isLoginRequestInProgress) return;
+
+        try {
+            isLoginRequestInProgress = true;
+            const res = await fetch(`${API_BASE_URL}/auth/url`);
+            if (!res.ok) throw new Error('구글 로그인 URL 요청 실패');
+            const data = await res.json();
+            window.location.href = data.authUrl;
+        } catch (e) {
+            alert('⚠️ 로그인 실패: ' + e.message);
+        } finally {
+            isLoginRequestInProgress = false;
+        }
+    }
+
+    async function getCalendarEvents() {
+        try {
+            const accessToken = sessionStorage.getItem('accessToken');
+            if (!accessToken) throw new Error('로그인이 필요합니다');
+
+            const res = await fetch(`${API_BASE_URL}/calendar/events`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`
+                }
+            });
+
+            if (!res.ok) throw new Error('일정 조회 실패 (' + res.status + ')');
+
+            const data = await res.json();
+            document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+            alert('⚠️ ' + e.message);
+        }
+    }
+
+    async function deleteUser() {
+        if (!confirm("정말 탈퇴하시겠습니까?")) return;
+
+        const accessToken = sessionStorage.getItem('accessToken');
+        if (!accessToken) {
+            alert('로그인이 필요합니다');
+            return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/auth/delete`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
+
+        if (res.ok) {
+            sessionStorage.removeItem('accessToken');
+            alert("🗑️ 탈퇴가 완료되었습니다");
+            location.reload();
+        } else {
+            alert("❌ 탈퇴 실패");
+        }
+    }
+
+    async function logout() {
+        const accessToken = sessionStorage.getItem('accessToken');
+        if (!accessToken) {
+            alert('로그인이 필요합니다');
+            return;
+        }
+
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ token: "" })
+        });
+
+        sessionStorage.removeItem('accessToken');
+        alert("🔒 로그아웃 완료");
+        location.reload();
+    }
+
+    async function setLanguage(langCode) {
+        try {
+            const accessToken = sessionStorage.getItem('accessToken');
+            if (!accessToken) throw new Error('로그인이 필요합니다');
+
+            const res = await fetch(`${API_BASE_URL}/users/profile/language`, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ language: langCode })
+            });
+
+            if (!res.ok) throw new Error('언어 설정 실패 (' + res.status + ')');
+            alert(`🌐 언어가 ${langCode}로 설정되었습니다.`);
+        } catch (e) {
+            alert('⚠️ ' + e.message);
+        }
+    }
+</script>
+
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+
+        if (code) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth/login?code=${code}`, {
+                    credentials: 'include'
+                });
+                if (!res.ok) throw new Error("AccessToken 발급 실패");
+
+                const accessToken = res.headers.get('Authorization');
+                if (!accessToken) {
+                    throw new Error("Authorization 헤더 없음");
+                }
+
+                sessionStorage.setItem("accessToken", accessToken); // ✅ 세션에 저장
+                localStorage.setItem("accessToken", accessToken);
+                console.log("✅ AccessToken 저장 완료:", accessToken);
+
+                window.history.replaceState({}, document.title, "/index.html"); // 👈 주소창에서 ?code= 제거
+            } catch (e) {
+                alert('❌ 로그인 처리 실패: ' + e.message);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

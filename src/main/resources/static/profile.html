@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>내 프로필</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        .field { margin-bottom: 0.5rem; }
+        .label { font-weight: bold; }
+        #error { color: red; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+
+<h1>내 프로필</h1>
+<div id="error"></div>
+<div id="profile">로딩 중…</div>
+<button onclick="window.location.href='index.html'">← 뒤로</button>
+
+<script>
+    const API_BASE_URL = 'http://localhost:8080';
+
+    async function fetchWithRefresh(url, options = {}) {
+        let accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            throw new Error('로그인이 필요합니다');
+        }
+
+        let res = await fetch(`${API_BASE_URL}${url}`, {
+            ...options,
+            headers: {
+                ...options.headers,
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
+
+        // accessToken 만료 시 refresh 요청 후 재시도
+        if (res.status === 401) {
+            const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: 'POST',
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`
+                }
+            });
+            
+            if (!refreshRes.ok) {
+                localStorage.removeItem('accessToken');
+                throw new Error('토큰 재발급 실패');
+            }
+
+            const tokenData = await refreshRes.json();
+            localStorage.setItem('accessToken', tokenData.token);
+            
+            // 토큰 재발급 성공 시 원래 요청 재시도
+            res = await fetch(`${API_BASE_URL}${url}`, {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    "Authorization": `Bearer ${tokenData.token}`
+                }
+            });
+        }
+
+        return res;
+    }
+
+    async function loadProfile() {
+        const profileEl = document.getElementById('profile');
+        const errorEl = document.getElementById('error');
+        try {
+            const res = await fetchWithRefresh('/users/profile');
+            if (!res.ok) throw new Error('프로필 조회 실패 (' + res.status + ')');
+            const data = await res.json();
+            profileEl.innerHTML = `
+                <div class="field"><span class="label">ID:</span> ${data.userId}</div>
+                <div class="field"><span class="label">Email:</span> ${data.email}</div>
+                <div class="field"><span class="label">Name:</span> ${data.name}</div>
+                <div class="field"><span class="label">Profile Image:</span>
+                    ${data.profileImagePath
+                ? `<img src="${data.profileImagePath}" alt="프로필" width="100">`
+                : '없음'}
+                </div>
+                <div class="field"><span class="label">Address:</span> ${data.address || '없음'}</div>
+                <div class="field"><span class="label">Signed At:</span> ${new Date(data.signedAt).toLocaleString()}</div>
+                <div class="field"><span class="label">Active:</span> ${data.isDeactivate ? '비활성' : '활성'}</div>
+            `;
+        } catch (err) {
+            errorEl.innerText = err.message;
+            profileEl.innerHTML = '';
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadProfile);
+</script>
+
+</body>
+</html>
