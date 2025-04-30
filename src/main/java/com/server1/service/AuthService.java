@@ -64,7 +64,7 @@ public class AuthService {
     @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
     private String redirectUri;
 
-    public String generateGoogleAuthUrl() {
+    public String generateGoogleAuthUrl() {  // 구글 로그인 폼
         String scope = "email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.birthday.read";
         return "https://accounts.google.com/o/oauth2/v2/auth" +
                 "?client_id=" + googleClientId +
