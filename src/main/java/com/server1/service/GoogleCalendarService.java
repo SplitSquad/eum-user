@@ -1,6 +1,7 @@
 package com.server1.service;
 
 import com.server1.dto.GoogleCalendarEventRequestDto;
+import com.server1.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import util.JwtUtil;
@@ -30,14 +31,15 @@ public class GoogleCalendarService {
 
     private final RedisUtil redisUtil;
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String clientId;
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     private String clientSecret;
 
-    public List<Map<String, Object>> getUpcomingEvents(HttpServletRequest request) {
-        String accessToken = getAccessToken(request);
+    public List<Map<String, Object>> getUpcomingEvents(String token) {
+        String accessToken = getAccessToken(token);
         try {
             URL url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -52,8 +54,8 @@ public class GoogleCalendarService {
         }
     }
 
-    public ResponseEntity<?> insertEvent(HttpServletRequest request, GoogleCalendarEventRequestDto eventDto) {
-        String accessToken = getAccessToken(request);
+    public ResponseEntity<?> insertEvent(String token, GoogleCalendarEventRequestDto eventDto) {
+        String accessToken = getAccessToken(token);
 
         try {
             URL url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
@@ -98,8 +100,8 @@ public class GoogleCalendarService {
         }
     }
 
-    public ResponseEntity<?> deleteEvent(HttpServletRequest request, String eventId) {
-        String accessToken = getAccessToken(request);
+    public ResponseEntity<?> deleteEvent(String token, String eventId) {
+        String accessToken = getAccessToken(token);
 
         try {
             URL url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events/" + eventId);
@@ -120,8 +122,8 @@ public class GoogleCalendarService {
         }
     }
 
-    public ResponseEntity<?> updateEvent(HttpServletRequest request, String eventId, GoogleCalendarEventRequestDto eventDto) {
-        String accessToken = getAccessToken(request);
+    public ResponseEntity<?> updateEvent(String token, String eventId, GoogleCalendarEventRequestDto eventDto) {
+        String accessToken = getAccessToken(token);
         try {
             URL url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events/" + eventId);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -160,12 +162,15 @@ public class GoogleCalendarService {
     }
 
 
-    private String getAccessToken(HttpServletRequest request) {
-        String email = request.getHeader("X-User-Email");
-        if (email == null) {
+    private String getAccessToken(String token) {
+        Long userId = jwtUtil.getUserid(token);
+
+        if (userId == null) {
             throw new RuntimeException("User email not found in header");
         }
-        
+
+        String email = userRepository.findById(userId).get().getEmail();
+
         String refreshToken = redisUtil.getRefreshToken(email);
         if (refreshToken == null) {
             throw new RuntimeException("Refresh 토큰 만료");
