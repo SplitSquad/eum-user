@@ -15,26 +15,27 @@ public class CalendarController {
     private final GoogleCalendarService googleCalendarService;
 
     @GetMapping
-    public ResponseEntity<?> getEvents(HttpServletRequest request) {
-        return ResponseEntity.ok(googleCalendarService.getUpcomingEvents(request));
+    public ResponseEntity<?> getEvents(@RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(googleCalendarService.getUpcomingEvents(token));
     }
 
     @PostMapping
-    public ResponseEntity<?> insert(HttpServletRequest request,
+    public ResponseEntity<?> insert(@RequestHeader("Authorization") String token,
                                     @RequestBody GoogleCalendarEventRequestDto eventDto){
-        return googleCalendarService.insertEvent(request, eventDto);
+        return googleCalendarService.insertEvent(token, eventDto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteEvent(HttpServletRequest request, @PathVariable String id) {
-        return googleCalendarService.deleteEvent(request, id);
+    public ResponseEntity<?> deleteEvent(@RequestHeader("Authorization") String token,
+                                         @PathVariable String id) {
+        return googleCalendarService.deleteEvent(token, id);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateEvent(HttpServletRequest request,
+    public ResponseEntity<?> updateEvent(@RequestHeader("Authorization") String token,
                                          @PathVariable String id,
                                          @RequestBody GoogleCalendarEventRequestDto eventDto) {
-        return googleCalendarService.updateEvent(request, id, eventDto);
+        return googleCalendarService.updateEvent(token, id, eventDto);
     }
 
 }
