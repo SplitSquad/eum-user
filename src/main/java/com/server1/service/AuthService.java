@@ -201,14 +201,12 @@ public class AuthService {
 
             String accessToken = jwtUtil.generateToken(user.getUserId(), user.getRole(), Duration.ofMinutes(15).toMillis());
 
-            res.addHeader("Authorization", accessToken);
-
             TokenRes tokenRes = new TokenRes();
             tokenRes.setEmail(user.getEmail());
             tokenRes.setRole(user.getRole());
+            tokenRes.setToken(accessToken);
 
             return tokenRes;
-
         } catch (IOException e) {
             throw new ResponseStatusException(UNAUTHORIZED, "Google login failed");
         }

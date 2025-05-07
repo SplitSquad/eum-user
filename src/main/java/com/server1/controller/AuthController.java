@@ -34,9 +34,8 @@ public class AuthController {
 
 
     @GetMapping("/login")
-    public void googleCallback(@RequestParam("code") String code, HttpServletResponse res) {
-        authService.login(code, res);
-        res.setStatus(HttpServletResponse.SC_FOUND);
+    public TokenRes googleCallback(@RequestParam("code") String code, HttpServletResponse res) {
+        return authService.login(code, res);
     }
 
 
