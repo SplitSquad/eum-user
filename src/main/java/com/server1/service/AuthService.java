@@ -65,7 +65,7 @@ public class AuthService {
     private String redirectUri;
 
     public String generateGoogleAuthUrl() {  // 구글 로그인 폼
-        String scope = "email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.birthday.read";
+        String scope = "email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.birthday.read https://www.googleapis.com/auth/user.addresses.read";
         return "https://accounts.google.com/o/oauth2/v2/auth" +
                 "?client_id=" + googleClientId +
                 "&redirect_uri=" + redirectUri +
@@ -76,9 +76,9 @@ public class AuthService {
                 "&prompt=consent";
     }
 
-    private Map<String, String> getPhoneAndBirthday(String accessToken) {
+    private Map<String, String> getPhoneBirthdayAddress(String accessToken) {
         try {
-            URL url = new URL("https://people.googleapis.com/v1/people/me?personFields=phoneNumbers,birthdays");
+            URL url = new URL("https://people.googleapis.com/v1/people/me?personFields=phoneNumbers,birthdays,addresses");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Authorization", "Bearer " + accessToken);
 
@@ -101,13 +101,23 @@ public class AuthService {
                         return String.format("%04d-%02d-%02d", year, month, day);
                     }).orElse("");
 
-            return Map.of("phoneNumber", phoneNumber, "birthday", birthday);
+            String address = ((List<Map<String, Object>>) response.getOrDefault("addresses", List.of()))
+                    .stream().findFirst()
+                    .map(addr -> (String) addr.get("formattedValue"))
+                    .orElse("");
+
+            return Map.of(
+                    "phoneNumber", phoneNumber,
+                    "birthday", birthday,
+                    "address", address
+            );
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Map.of("phoneNumber", "", "birthday", "");
+            return Map.of("phoneNumber", "", "birthday", "", "address", "");
         }
     }
+
 
 
     public TokenRes login(String code, HttpServletResponse res) {
@@ -128,9 +138,10 @@ public class AuthService {
             String pictureUrl = (String) idToken.getPayload().get("picture");
             String googleRefreshToken = tokenResponse.getRefreshToken();
 
-            Map<String, String> phoneAndBirthday = getPhoneAndBirthday(tokenResponse.getAccessToken());
-            String phoneNumber = phoneAndBirthday.get("phoneNumber");
-            String birthday = phoneAndBirthday.get("birthday");
+            Map<String, String> info = getPhoneBirthdayAddress(tokenResponse.getAccessToken());
+            String phoneNumber = info.get("phoneNumber");
+            String birthday = info.get("birthday");
+            String address = info.get("address");
 
             boolean isNewUser = false;
 
@@ -149,6 +160,7 @@ public class AuthService {
                         .profileImagePath(pictureUrl)
                         .phoneNumber(phoneNumber)
                         .birthday(birthday)
+                        .address(address) // 추가
                         .signedAt(LocalDateTime.now())
                         .isDeactivate(false)
                         .role("ROLE_USER")
