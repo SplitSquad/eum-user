@@ -19,24 +19,24 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<UserRes> getProfile(
-            @RequestHeader("X-User-Email") String email
+            @RequestHeader("Authorization") String token
     ) {
-        return ResponseEntity.ok(userService.getProfile(email));
+        return ResponseEntity.ok(userService.getProfile(token));
     }
 
     @PutMapping
     public ResponseEntity<UserRes> updateProfile(
-            @RequestHeader("X-User-Email") String email,
+            @RequestHeader("Authorization") String token,
             @Validated @RequestBody UserReq req
     ) {
-        return ResponseEntity.ok(userService.updateProfile(email, req));
+        return ResponseEntity.ok(userService.updateProfile(token, req));
     }
 
     @PutMapping("/language")
     public ResponseEntity<UserPreferenceRes> updateLanguage(
-            @RequestHeader("X-User-Email") String email,
+            @RequestHeader("Authorization") String token,
             @RequestBody UserLangReq req
     ) {
-        return ResponseEntity.ok(userService.updateLanguage(email, req.getLanguage()));
+        return ResponseEntity.ok(userService.updateLanguage(token, req.getLanguage()));
     }
 }
