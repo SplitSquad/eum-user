@@ -16,15 +16,15 @@ public class UserPreferenceController {
     private final UserPreferenceService prefService;
 
     @GetMapping
-    public ResponseEntity<UserPreferenceRes> getPreference(Authentication auth) {
-        return ResponseEntity.ok(prefService.getPreference(auth));
+    public ResponseEntity<UserPreferenceRes> getPreference(@RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(prefService.getPreference(token));
     }
 
     @PostMapping
     public ResponseEntity<UserPreferenceRes> saveOrUpdate(
-            Authentication auth,
+            @RequestHeader("Authorization") String token,
             @Validated @RequestBody UserPreferenceReq req
     ) {
-        return ResponseEntity.ok(prefService.saveOrUpdate(auth, req));
+        return ResponseEntity.ok(prefService.saveOrUpdate(token, req));
     }
 }
