@@ -25,16 +25,19 @@ public class UserService {
     private final UserPreferenceRepository prefRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final JwtUtil jwtUtil;
 
-    public UserRes getProfile(String email) {
-        UserEntity user = userRepository.findByEmail(email)
+    public UserRes getProfile(String token) {
+        Long userId = jwtUtil.getUserid(token);
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
         return UserRes.from(user);
     }
 
     @Transactional
-    public UserRes updateProfile(String email, UserReq req) {
-        UserEntity user = userRepository.findByEmail(email)
+    public UserRes updateProfile(String token, UserReq req) {
+        Long userId = jwtUtil.getUserid(token);
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
         user.setName(req.getName());
@@ -75,8 +78,9 @@ public class UserService {
     }
 
     @Transactional
-    public UserPreferenceRes updateLanguage(String email, String language) {
-        UserEntity user = userRepository.findByEmail(email)
+    public UserPreferenceRes updateLanguage(String token, String language) {
+        Long userId = jwtUtil.getUserid(token);
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
         UserPreferenceEntity pref = prefRepository.findByUser(user)
