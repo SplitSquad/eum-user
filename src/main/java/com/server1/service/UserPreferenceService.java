@@ -24,10 +24,11 @@ public class UserPreferenceService {
     private final UserPreferenceRepository prefRepo;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final JwtUtil jwtUtil;
 
-    public UserPreferenceRes getPreference(Authentication auth) {
-        String email = (String) auth.getPrincipal();
-        UserEntity user = userRepository.findByEmail(email)
+    public UserPreferenceRes getPreference(String token) {
+        Long userId = jwtUtil.getUserid(token);
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "user not found"));
 
         UserPreferenceEntity pref = prefRepo.findByUser(user)
@@ -36,9 +37,9 @@ public class UserPreferenceService {
         return UserPreferenceRes.fromEntity(pref);
     }
 
-    public UserPreferenceRes saveOrUpdate(Authentication auth, UserPreferenceReq req) {
-        String email = (String) auth.getPrincipal();
-        UserEntity user = userRepository.findByEmail(email)
+    public UserPreferenceRes saveOrUpdate(String token, UserPreferenceReq req) {
+        Long userId = jwtUtil.getUserid(token);
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "user not found"));
 
         UserPreferenceEntity pref = prefRepo.findByUser(user)
