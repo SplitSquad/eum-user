@@ -160,7 +160,7 @@ public class AuthService {
                         .profileImagePath(pictureUrl)
                         .phoneNumber(phoneNumber)
                         .birthday(birthday)
-                        .address(address) // 추가
+                        .address(address)
                         .signedAt(LocalDateTime.now())
                         .isDeactivate(false)
                         .role("ROLE_USER")
@@ -203,13 +203,19 @@ public class AuthService {
             redisUtil.setRefreshToken(email, googleRefreshToken, Duration.ofDays(7).toMillis());
 
             // ResponseCookie 대신 Cookie 사용
-            Cookie refreshCookie = new Cookie("refreshToken", googleRefreshToken);
+            /**Cookie refreshCookie = new Cookie("refreshToken", googleRefreshToken);
             refreshCookie.setHttpOnly(true);
             refreshCookie.setSecure(true);
             refreshCookie.setPath("/");
             refreshCookie.setMaxAge((int) Duration.ofDays(7).getSeconds());
 
-            res.addCookie(refreshCookie);
+            res.addCookie(refreshCookie);*/
+
+            String cookieValue = "refreshToken=" + googleRefreshToken +
+                    "; Max-Age=" + Duration.ofDays(7).getSeconds() +
+                    "; Path=/; HttpOnly; Secure; SameSite=None";
+
+            res.addHeader("Set-Cookie", cookieValue);
 
             String accessToken = jwtUtil.generateToken(user.getUserId(), user.getRole(), Duration.ofMinutes(15).toMillis());
 

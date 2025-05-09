@@ -11,12 +11,6 @@ spring:
             client-id: ${GOOGLE_ID}
             client-secret: ${GOOGLE_SECRET}
             redirect-uri: ${GOOGLE_URI}
-            scope:
-              - email
-              - profile
-              - https://www.googleapis.com/auth/calendar
-              - https://www.googleapis.com/auth/user.phonenumbers.read
-              - https://www.googleapis.com/auth/user.birthday.read
             provider: google
         provider:
           google:
@@ -30,10 +24,6 @@ spring:
     redis:
       host: ${REDIS_URL}
       port: 6379
-  jpa:
-    hibernate:
-      ddl-auto: update       # 애플리케이션 시작 시 엔티티 → 테이블 동기화
-    show-sql: true
   kafka:
     bootstrap-servers: ${KAFKA_URL}
     producer:

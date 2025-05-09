@@ -20,25 +20,16 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
-    private String clientId;
-
-    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
-    private String redirectUri;
-
     @GetMapping("/url")
     public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
         String authUrl = authService.generateGoogleAuthUrl();
         return ResponseEntity.ok(Map.of("authUrl", authUrl));
     }
 
-
     @GetMapping("/login")
     public TokenRes googleCallback(@RequestParam("code") String code, HttpServletResponse res) {
         return authService.login(code, res);
     }
-
-
 
     @PostMapping("/refresh")
     public ResponseEntity<TokenRes> refresh(HttpServletRequest request, HttpServletResponse response) {
