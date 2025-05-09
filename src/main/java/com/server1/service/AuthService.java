@@ -217,7 +217,9 @@ public class AuthService {
 
             String cookieValue = "refreshToken=" + googleRefreshToken +
                     "; Max-Age=" + Duration.ofDays(7).getSeconds() +
-                    "; Path=/; HttpOnly; Secure; SameSite=None";
+                    "; Path=/; HttpOnly; SameSite=None";
+
+            res.addHeader("Set-Cookie", cookieValue);
 
             res.addHeader("Set-Cookie", cookieValue);
 
