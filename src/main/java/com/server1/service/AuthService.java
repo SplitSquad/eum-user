@@ -63,6 +63,10 @@ public class AuthService {
     private String googleClientSecret;
     @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
     private String redirectUri;
+    @Value("${jwt.access-token-expiration}")
+    private Long accessTokenExp;
+    @Value("${jwt.refresh-token-expiration}")
+    private Long refreshTokenExp;
 
     public String generateGoogleAuthUrl() {  // 구글 로그인 폼
         String scope = "email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.birthday.read https://www.googleapis.com/auth/user.addresses.read";
@@ -200,7 +204,7 @@ public class AuthService {
             }
 
             // Redis 저장 및 refreshToken 쿠키 설정
-            redisUtil.setRefreshToken(email, googleRefreshToken, Duration.ofDays(7).toMillis());
+            redisUtil.setRefreshToken(email, googleRefreshToken,refreshTokenExp);
 
             // ResponseCookie 대신 Cookie 사용
             /**Cookie refreshCookie = new Cookie("refreshToken", googleRefreshToken);
@@ -217,7 +221,7 @@ public class AuthService {
 
             res.addHeader("Set-Cookie", cookieValue);
 
-            String accessToken = jwtUtil.generateToken(user.getUserId(), user.getRole(), Duration.ofMinutes(15).toMillis());
+            String accessToken = jwtUtil.generateToken(user.getUserId(), user.getRole(),accessTokenExp) ;
 
             TokenRes tokenRes = new TokenRes();
             tokenRes.setEmail(user.getEmail());
