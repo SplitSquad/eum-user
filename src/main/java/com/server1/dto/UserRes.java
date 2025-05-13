@@ -2,7 +2,8 @@ package com.server1.dto;
 
 import com.server1.entity.UserEntity;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
