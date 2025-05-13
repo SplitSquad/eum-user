@@ -321,12 +321,18 @@ public class AuthService {
 
         return ResponseEntity.ok(new CommonRes(true));
     }
+    
     public ResponseEntity<?> authenticate(String token) {
-        long userId = jwtUtil.getUserid(token);
+        Long userId;
+        try {
+            userId = jwtUtil.getUserid(token);
+        } catch (Exception e) {
+           throw new ResponseStatusException(NOT_FOUND, "user not found");
+        }
         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "user not found"));
         UserRes userRes = new UserRes();
         userRes.setEmail(user.getEmail());
         userRes.setRole(user.getRole());
-        return ResponseEntity.ok(userRes);
+        return ResponseEntity.ok(userRes); // 푸쉬해
     }
 }
