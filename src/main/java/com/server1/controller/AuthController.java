@@ -20,6 +20,11 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @GetMapping
+    public ResponseEntity<?> authenticate(String token) {
+        return authService.authenticate(token);
+    }
+    
     @GetMapping("/url")
     public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
         String authUrl = authService.generateGoogleAuthUrl();
