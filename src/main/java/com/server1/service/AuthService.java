@@ -333,6 +333,6 @@ public class AuthService {
         UserRes userRes = new UserRes();
         userRes.setEmail(user.getEmail());
         userRes.setRole(user.getRole());
-        return ResponseEntity.ok(userRes); // 푸쉬해
+        return ResponseEntity.ok(userRes); 
     }
 }
