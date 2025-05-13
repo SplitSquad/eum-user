@@ -6,8 +6,9 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Getter
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class UserRes {
     private Long userId;
     private String email;
