@@ -216,12 +216,12 @@ public class AuthService {
             res.addCookie(refreshCookie);*/
 
             String cookieValue = "refreshToken=" + googleRefreshToken +
-                    "; Max-Age=" + Duration.ofDays(7).getSeconds() +
+                    "; Max-Age=" + Duration.ofDays(refreshTokenExp).getSeconds() +
                     "; Path=/; HttpOnly; Secure; SameSite=None";
 
             res.addHeader("Set-Cookie", cookieValue);
 
-            String accessToken = jwtUtil.generateToken(user.getUserId(), user.getRole(),accessTokenExp) ;
+            String accessToken = jwtUtil.generateToken(user.getUserId(), user.getEmail() ,user.getRole(),accessTokenExp) ;
 
             TokenRes tokenRes = new TokenRes();
             tokenRes.setEmail(user.getEmail());
@@ -274,7 +274,7 @@ public class AuthService {
                     .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
 
             // 새로운 access token 발급
-            String newAccessToken = jwtUtil.generateToken(user.getUserId(), user.getRole(), Duration.ofMinutes(15).toMillis());
+            String newAccessToken = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRole(), accessTokenExp);
             response.addHeader("Authorization", newAccessToken);
 
             TokenRes tokenRes = new TokenRes();
@@ -321,18 +321,6 @@ public class AuthService {
 
         return ResponseEntity.ok(new CommonRes(true));
     }
-    
-    public ResponseEntity<?> authenticate(String token) {
-        Long userId;
-        try {
-            userId = jwtUtil.getUserid(token);
-        } catch (Exception e) {
-           throw new ResponseStatusException(NOT_FOUND, "user not found");
-        }
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "user not found"));
-        UserRes userRes = new UserRes();
-        userRes.setEmail(user.getEmail());
-        userRes.setRole(user.getRole());
-        return ResponseEntity.ok(userRes); 
-    }
+
 }
+
