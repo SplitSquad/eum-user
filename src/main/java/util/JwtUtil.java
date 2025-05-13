@@ -29,8 +29,9 @@ public class JwtUtil {
                 .get("userId",  Long.class);
     }
 
-    public String generateToken(Long userId, String role, long expiration) {
+    public String generateToken(Long userId, String email, String role, long expiration) {
         return Jwts.builder()
+                .claim("email", email)
                 .claim("userId", userId)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
