@@ -19,11 +19,6 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-
-    @GetMapping
-    public ResponseEntity<?> authenticate(String token) {
-        return authService.authenticate(token);
-    }
     
     @GetMapping("/url")
     public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
