@@ -227,6 +227,7 @@ public class AuthService {
             tokenRes.setEmail(user.getEmail());
             tokenRes.setRole(user.getRole());
             tokenRes.setToken(accessToken);
+            tokenRes.setIsOnBoardDone(isOnBoardDone);
 
             return tokenRes;
         } catch (IOException e) {

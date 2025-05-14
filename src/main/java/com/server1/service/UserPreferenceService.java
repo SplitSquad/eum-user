@@ -45,17 +45,16 @@ public class UserPreferenceService {
         UserPreferenceEntity pref = prefRepo.findByUser(user)
                 .orElse(UserPreferenceEntity.builder().user(user).build());
 
-        pref.setNation(req.getNation());
-        pref.setLanguage(req.getLanguage());
-        pref.setGender(req.getGender());
-        pref.setVisitPurpose(req.getVisitPurpose());
-        pref.setPeriod(req.getPeriod());
-        pref.setOnBoardingPreference(req.getOnBoardingPreference());
-        pref.setIsOnBoardDone(req.getIsOnBoardDone());
+        if (req.getNation() != null) pref.setNation(req.getNation());
+        if (req.getLanguage() != null) pref.setLanguage(req.getLanguage());
+        if (req.getGender() != null) pref.setGender(req.getGender());
+        if (req.getVisitPurpose() != null) pref.setVisitPurpose(req.getVisitPurpose());
+        if (req.getPeriod() != null) pref.setPeriod(req.getPeriod());
+        if (req.getOnBoardingPreference() != null) pref.setOnBoardingPreference(req.getOnBoardingPreference());
+        if (req.getIsOnBoardDone() != null) pref.setIsOnBoardDone(req.getIsOnBoardDone());
 
         pref = prefRepo.save(pref);
 
-        // Kafka: 선호도 변경 이벤트도 updateUser 토픽으로 발행
         KafkaUser prefDto = new KafkaUser(
                 user.getUserId(),
                 user.getName(),
@@ -75,4 +74,5 @@ public class UserPreferenceService {
 
         return UserPreferenceRes.fromEntity(pref);
     }
+
 }
