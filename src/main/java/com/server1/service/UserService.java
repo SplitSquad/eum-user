@@ -1,13 +1,12 @@
 package com.server1.service;
 
-import com.server1.dto.KafkaUser;
-import com.server1.dto.UserPreferenceRes;
-import com.server1.dto.UserReq;
-import com.server1.dto.UserRes;
+import com.server1.dto.*;
 import com.server1.entity.UserEntity;
 import com.server1.entity.UserPreferenceEntity;
+import com.server1.entity.ReportEntity;
 import com.server1.repository.UserPreferenceRepository;
 import com.server1.repository.UserRepository;
+import com.server1.repository.ReportRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +26,7 @@ public class UserService {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
     private final JwtUtil jwtUtil;
+    private final ReportRepository reportRepository;
 
     public UserRes getProfile(String token) {
         Long userId = jwtUtil.getUserid(token);
@@ -74,7 +74,8 @@ public class UserService {
                 user.getAddress(),
                 user.getSignedAt(),
                 user.getIsDeactivate(),
-                user.getRole()
+                user.getRole(),
+                user.getNReported()
         );
     }
 
@@ -106,4 +107,33 @@ public class UserService {
 
         return UserPreferenceRes.fromEntity(pref);
     }
+
+    @Transactional
+    public void reportUser(String token, ReportReq req) {
+        Long reporterId = jwtUtil.getUserid(token); // JWT로 신고자 ID 추출
+
+        UserEntity reporter = userRepository.findById(reporterId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "신고자 없음"));
+
+        UserEntity reported = userRepository.findById(req.getReportedId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "피신고자 없음"));
+
+        // 중복 신고 방지
+        boolean alreadyReported = reportRepository.existsByReporterAndReported(reporter, reported);
+        if (alreadyReported) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 신고한 사용자입니다.");
+        }
+
+        reportRepository.save(
+                ReportEntity.builder()
+                        .reporter(reporter)
+                        .reported(reported)
+                        .reportContent(req.getReportContent())
+                        .build()
+        );
+
+        reported.setNReported(reported.getNReported() + 1);
+        userRepository.save(reported);
+    }
+
 }

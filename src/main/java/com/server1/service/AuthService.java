@@ -168,6 +168,7 @@ public class AuthService {
                         .signedAt(LocalDateTime.now())
                         .isDeactivate(false)
                         .role("ROLE_USER")
+                        .nReported(0)
                         .build());
                 isNewUser = true;
             }

@@ -21,6 +21,7 @@ public class UserRes {
     private LocalDateTime signedAt;
     private Boolean isDeactivate;
     private String role;
+    private Integer nReported;
 
     public static UserRes from(UserEntity entity) {
         return new UserRes(
@@ -33,7 +34,8 @@ public class UserRes {
                 entity.getAddress(),
                 entity.getSignedAt(),
                 entity.getIsDeactivate(),
-                entity.getRole()
+                entity.getRole(),
+                entity.getNReported()
         );
     }
 }

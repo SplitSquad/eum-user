@@ -36,6 +36,9 @@ spring:
       group-id: eum
     listener:
       missing-topics-fatal: false
+  jpa:
+    hibernate:
+      ddl-auto: update
 
 jwt:
   token:

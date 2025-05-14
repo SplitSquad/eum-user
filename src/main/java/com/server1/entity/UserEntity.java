@@ -25,6 +25,9 @@ public class UserEntity {
     @Column(nullable = false)
     private String role;
 
+    @Column(nullable = true)
+    private Integer nReported = 0;
+
     private String phoneNumber;
     private String birthday;
     private String profileImagePath;

@@ -1,9 +1,6 @@
 package com.server1.controller;
 
-import com.server1.dto.UserLangReq;
-import com.server1.dto.UserPreferenceRes;
-import com.server1.dto.UserReq;
-import com.server1.dto.UserRes;
+import com.server1.dto.*;
 import com.server1.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -38,5 +35,14 @@ public class UserController {
             @RequestBody UserLangReq req
     ) {
         return ResponseEntity.ok(userService.updateLanguage(token, req.getLanguage()));
+    }
+
+    @PostMapping("/report")
+    public ResponseEntity<Void> reportUser(
+            @RequestHeader("Authorization") String token,
+            @RequestBody ReportReq req
+    ) {
+        userService.reportUser(token, req);
+        return ResponseEntity.ok().build();
     }
 }
