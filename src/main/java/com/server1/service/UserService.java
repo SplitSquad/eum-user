@@ -118,10 +118,12 @@ public class UserService {
         UserEntity reported = userRepository.findById(req.getReportedId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "피신고자 없음"));
 
-        // 중복 신고 방지
-        boolean alreadyReported = reportRepository.existsByReporterAndReported(reporter, reported);
+        boolean alreadyReported = reportRepository.existsByReporterAndReportedAndServiceTypeAndTargetTypeAndContentId(
+                reporter, reported, req.getServiceType(), req.getTargetType(), req.getContentId()
+        );
+
         if (alreadyReported) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 신고한 사용자입니다.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 신고한 글/댓글입니다.");
         }
 
         reportRepository.save(
@@ -129,6 +131,9 @@ public class UserService {
                         .reporter(reporter)
                         .reported(reported)
                         .reportContent(req.getReportContent())
+                        .serviceType(req.getServiceType())
+                        .targetType(req.getTargetType())
+                        .contentId(req.getContentId())
                         .build()
         );
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -24,4 +25,9 @@ public class RedisUtil {
         String key = email;
         Boolean result = redisTemplate.delete(key);
     }
+
+    public void setTempDeactivate(String email, String value, int minutes) {
+        redisTemplate.opsForValue().set(email + "_deactivate", value, Duration.ofMinutes(minutes));
+    }
+
 }

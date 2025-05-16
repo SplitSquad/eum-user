@@ -1,35 +1,39 @@
 package com.server1.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "report")
 @Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ReportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long reportId;  // 신고 ID
+    private Long reportId;
 
     @ManyToOne
-    @JoinColumn(name = "reporter_id")
+    @JoinColumn(name = "reporter_id", nullable = false)
     private UserEntity reporter;
 
     @ManyToOne
-    @JoinColumn(name = "reported_id")
+    @JoinColumn(name = "reported_id", nullable = false)
     private UserEntity reported;
 
     @Column(nullable = false, length = 1000)
     private String reportContent;
 
-    @Builder
-    public ReportEntity(UserEntity reporter, UserEntity reported, String reportContent) {
-        this.reporter = reporter;
-        this.reported = reported;
-        this.reportContent = reportContent;
-    }
+    @Column(nullable = false)
+    private String serviceType;   // Community, Discussion
+
+    @Column(nullable = false)
+    private String targetType;    // Post, Comment
+
+    @Column(nullable = false)
+    private Long contentId;       // 글/댓글 ID
 }
+
