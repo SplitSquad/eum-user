@@ -22,6 +22,7 @@ public class UserRes {
     private Boolean isDeactivate;
     private String role;
     private Integer nReported;
+    private Integer deactivateCount;
 
     public static UserRes from(UserEntity entity) {
         return new UserRes(
@@ -35,7 +36,8 @@ public class UserRes {
                 entity.getSignedAt(),
                 entity.getIsDeactivate(),
                 entity.getRole(),
-                entity.getNReported()
+                entity.getNReported(),
+                entity.getDeactivateCount()
         );
     }
 }

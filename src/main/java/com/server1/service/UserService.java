@@ -75,7 +75,8 @@ public class UserService {
                 user.getSignedAt(),
                 user.getIsDeactivate(),
                 user.getRole(),
-                user.getNReported()
+                user.getNReported(),
+                user.getDeactivateCount()
         );
     }
 

@@ -1,8 +1,10 @@
 package com.server1.service;
 
 import com.server1.dto.ReportSimpleRes;
+import com.server1.dto.UserFullRes;
 import com.server1.entity.ReportEntity;
 import com.server1.entity.UserEntity;
+import com.server1.entity.UserPreferenceEntity;
 import com.server1.repository.ReportRepository;
 import com.server1.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -10,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import util.JwtUtil;
 import util.RedisUtil;
 
 import java.util.List;
@@ -22,27 +25,64 @@ public class AdminService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final RedisUtil redisUtil;
+    private final JwtUtil jwtUtil;
 
-    public List<ReportSimpleRes> getAllReports() {
-        return reportRepository.findAll()
+    private void validateAdmin(String token) {
+        String pureToken = token.replace("Bearer ", "");
+        String role = jwtUtil.getRole(pureToken);
+        if (!"ROLE_ADMIN".equals(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "관리자 권한이 없습니다.");
+        }
+    }
+
+    public List<ReportSimpleRes> getReportsByReportedId(Long userId, String token) {
+        validateAdmin(token);
+        UserEntity reported = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        return reportRepository.findByReported(reported)
                 .stream()
                 .map(ReportSimpleRes::from)
                 .collect(Collectors.toList());
     }
 
-    public ReportEntity getReportDetail(Long reportId) {
+    public ReportEntity getReportDetail(Long reportId, String token) {
+        validateAdmin(token);
         return reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "신고 내역을 찾을 수 없습니다."));
     }
 
     @Transactional
-    public void deactivateTemporarily(Long userId) {
+    public void deactivateTemporarily(Long userId, int minutes, String token) {
+        validateAdmin(token);
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        user.setIsDeactivate(true); // DB에 isDeactivate = true 저장
+        user.setIsDeactivate(true);
+        user.setDeactivateCount(user.getDeactivateCount() + 1);
         userRepository.save(user);
 
-        redisUtil.setTempDeactivate(user.getEmail(), "true", 30); // 30분 동안 임시 비활성화 저장
+        redisUtil.setTempDeactivate(user.getEmail(), "true", minutes);
+    }
+
+    @Transactional
+    public void promoteUserToAdmin(String email, String token) {
+        validateAdmin(token);
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        user.setRole("ROLE_ADMIN");
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public List<UserFullRes> getAllUserInfos(String token) {
+        validateAdmin(token);
+        return userRepository.findAll().stream()
+                .map(user -> {
+                    UserPreferenceEntity pref = user.getUserPreference();
+                    return UserFullRes.from(user, pref);
+                })
+                .collect(Collectors.toList());
     }
 }

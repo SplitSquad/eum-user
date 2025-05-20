@@ -1,6 +1,7 @@
 package com.server1.dto;
 
 import com.server1.entity.ReportEntity;
+import com.server1.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,11 +12,14 @@ import lombok.NoArgsConstructor;
 public class ReportSimpleRes {
     private Long reportId;
     private String reportContent;
+    private UserEntity reporter;
+
 
     public static ReportSimpleRes from(ReportEntity entity) {
         return new ReportSimpleRes(
                 entity.getReportId(),
-                entity.getReportContent()
+                entity.getReportContent(),
+                entity.getReporter()
         );
     }
 }

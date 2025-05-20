@@ -24,6 +24,7 @@ spring:
     redis:
       host: ${REDIS_URL}
       port: 6379
+      notify-keyspace-events: Ex
   kafka:
     bootstrap-servers: ${KAFKA_URL}
     producer:

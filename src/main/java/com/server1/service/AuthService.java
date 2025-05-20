@@ -169,6 +169,7 @@ public class AuthService {
                         .isDeactivate(false)
                         .role("ROLE_USER")
                         .nReported(0)
+                        .deactivateCount(0)
                         .build());
                 isNewUser = true;
             }

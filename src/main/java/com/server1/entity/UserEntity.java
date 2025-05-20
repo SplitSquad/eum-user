@@ -5,12 +5,12 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "USER")
-@Getter @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Getter @Setter
+@Entity
+@Table(name = "USER")
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,8 +25,11 @@ public class UserEntity {
     @Column(nullable = false)
     private String role;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private Integer nReported = 0;
+
+    @Column(nullable = false)
+    private Integer deactivateCount = 0;
 
     private String phoneNumber;
     private String birthday;
@@ -34,4 +37,7 @@ public class UserEntity {
     private String address;
     private LocalDateTime signedAt;
     private Boolean isDeactivate;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private UserPreferenceEntity userPreference;
 }
