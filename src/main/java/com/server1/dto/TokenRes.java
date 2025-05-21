@@ -12,6 +12,7 @@ public class TokenRes {
     private String token;
     private String email;
     private String role;
+    private String name;
     private String loginType;
     private Boolean isOnBoardDone;
 }

@@ -231,6 +231,7 @@ public class AuthService {
             tokenRes.setEmail(user.getEmail());
             tokenRes.setRole(user.getRole());
             tokenRes.setToken(accessToken);
+            tokenRes.setName(user.getName());
             tokenRes.setIsOnBoardDone(isOnBoardDone);
             tokenRes.setLoginType(user.getLoginType());
 
@@ -401,10 +402,14 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateToken(user.getUserId(), user.getEmail() ,user.getRole(),accessTokenExp) ;
 
+        UserPreferenceEntity pref = userPreferenceRepository.findByUser(user).get();
+
         TokenRes tokenRes = new TokenRes();
         tokenRes.setEmail(user.getEmail());
         tokenRes.setRole(user.getRole());
         tokenRes.setToken(accessToken);
+        tokenRes.setName(user.getName());
+        tokenRes.setIsOnBoardDone(pref.getIsOnBoardDone());
         tokenRes.setLoginType(user.getLoginType());
 
         return ResponseEntity.ok(tokenRes);
