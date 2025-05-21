@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server1.dto.KafkaDeactivate;
 import com.server1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.Message;
@@ -13,8 +15,6 @@ import org.springframework.data.redis.listener.KeyExpirationEventMessageListener
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Configuration
 @RequiredArgsConstructor
@@ -30,7 +30,7 @@ public class RedisConfig {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);
         container.addMessageListener(
-                new KeyExpirationListener(userRepository, kafkaTemplate, objectMapper),
+                new KeyExpirationListener(container, userRepository, kafkaTemplate, objectMapper),
                 new PatternTopic("__keyevent@0__:expired")
         );
         return container;
@@ -44,10 +44,13 @@ public class RedisConfig {
         private final KafkaTemplate<String, String> kafkaTemplate;
         private final ObjectMapper objectMapper;
 
-        public KeyExpirationListener(UserRepository userRepository,
-                                     KafkaTemplate<String, String> kafkaTemplate,
-                                     ObjectMapper objectMapper) {
-            super(new RedisMessageListenerContainer());
+        public KeyExpirationListener(
+                RedisMessageListenerContainer listenerContainer,
+                UserRepository userRepository,
+                KafkaTemplate<String, String> kafkaTemplate,
+                ObjectMapper objectMapper
+        ) {
+            super(listenerContainer);
             this.userRepository = userRepository;
             this.kafkaTemplate = kafkaTemplate;
             this.objectMapper = objectMapper;
@@ -62,8 +65,7 @@ public class RedisConfig {
                 userRepository.findByEmail(email).ifPresent(user -> {
                     KafkaDeactivate event = new KafkaDeactivate(user.getUserId(), 0);
                     try {
-                        String json = objectMapper.writeValueAsString(event);
-                        kafkaTemplate.send("deactivate", json);
+                        kafkaTemplate.send("deactivate", objectMapper.writeValueAsString(event));
                     } catch (JsonProcessingException e) {
                         log.error("Kafka 직렬화 실패", e);
                     }
