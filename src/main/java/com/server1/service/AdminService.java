@@ -1,5 +1,7 @@
 package com.server1.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server1.dto.KafkaDeactivate;
 import com.server1.dto.ReportSimpleRes;
 import com.server1.dto.UserFullRes;
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import util.JwtUtil;
 import util.RedisUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,10 +27,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
-
-    private final KafkaTemplate<String, KafkaDeactivate> kafkaTemplate;
+    private static final Logger log = LoggerFactory.getLogger(AdminService.class);
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
     private final RedisUtil redisUtil;
     private final JwtUtil jwtUtil;
 
@@ -67,7 +72,11 @@ public class AdminService {
         redisUtil.setTempDeactivate(user.getEmail(), "true", minutes);
 
         KafkaDeactivate event = new KafkaDeactivate(user.getUserId(), 1);
-        kafkaTemplate.send("deactivate", event);
+        try {
+            kafkaTemplate.send("deactivate", objectMapper.writeValueAsString(event));
+        } catch (JsonProcessingException e) {
+            log.error("Kafka 직렬화 실패", e);
+        }
     }
 
 

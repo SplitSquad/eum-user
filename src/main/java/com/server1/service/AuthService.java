@@ -330,11 +330,12 @@ public class AuthService {
     }
 
     public ResponseEntity<?> commonJoin(UserReq userReq) {
-        if (userRepository.findByEmail(userReq.getEmail()) != null) {
-            return ResponseEntity.badRequest().body(new ResponseStatusException(UNAUTHORIZED, "Email already in use"));
+        UserEntity user = userRepository.findByEmail(userReq.getEmail()).orElse(null);
+        if (user != null) {
+            return ResponseEntity.badRequest().body("Email already in use");
         }
 
-        UserEntity user = UserEntity.builder()
+        user = UserEntity.builder()
                 .email(userReq.getEmail())
                 .name(userReq.getName())
                 .address(userReq.getAddress())
@@ -342,10 +343,25 @@ public class AuthService {
                 .role("ROLE_USER")
                 .loginType("일반")
                 .signedAt(LocalDateTime.now())
+                .deactivateCount(0)
+                .nReported(0)
                 .phoneNumber(userReq.getPhoneNumber())
                 .password(bCryptPasswordEncoder.encode(userReq.getPassword()))
                 .build();
         userRepository.save(user);
+
+        UserPreferenceEntity pref = UserPreferenceEntity.builder()
+                .user(user)
+                .nation("")
+                .language("")
+                .gender("")
+                .visitPurpose("")
+                .period("")
+                .onBoardingPreference("{}")
+                .isOnBoardDone(false)
+                .build();
+
+        userPreferenceRepository.save(pref);
 
         KafkaUser kafkaDto = new KafkaUser(
                 user.getUserId(),
@@ -365,13 +381,12 @@ public class AuthService {
     public ResponseEntity<?> commonLogin(UserReq userReq, HttpServletResponse res) {
         UserEntity user = userRepository.findByEmail(userReq.getEmail()).get();
         if (user == null) {
-            return ResponseEntity.badRequest().body(new ResponseStatusException(UNAUTHORIZED, "User not found"));
+            return ResponseEntity.badRequest().body("User not found");
         }
 
         if(!bCryptPasswordEncoder.matches(userReq.getPassword(), user.getPassword())){
-            return ResponseEntity.badRequest().body(new ResponseStatusException(UNAUTHORIZED, "Wrong password"));
+            return ResponseEntity.badRequest().body("Wrong password");
         }
-
 
 
         String refreshToken = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRole(), refreshTokenExp);
