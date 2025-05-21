@@ -2,6 +2,7 @@ package com.server1.service;
 
 import com.server1.dto.*;
 import org.springframework.beans.factory.config.Scope;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import util.JwtUtil;
 import com.server1.entity.UserEntity;
 import com.server1.entity.UserPreferenceEntity;
@@ -56,6 +57,7 @@ public class AuthService {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final UserPreferenceRepository userPreferenceRepository;
     private final ObjectMapper objectMapper;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
@@ -166,7 +168,7 @@ public class AuthService {
                         .birthday(birthday)
                         .address(address)
                         .signedAt(LocalDateTime.now())
-                        .isDeactivate(false)
+                        .loginType("구글")
                         .role("ROLE_USER")
                         .nReported(0)
                         .deactivateCount(0)
@@ -230,12 +232,14 @@ public class AuthService {
             tokenRes.setRole(user.getRole());
             tokenRes.setToken(accessToken);
             tokenRes.setIsOnBoardDone(isOnBoardDone);
+            tokenRes.setLoginType(user.getLoginType());
 
             return tokenRes;
         } catch (IOException e) {
             throw new ResponseStatusException(UNAUTHORIZED, "Google login failed");
         }
     }
+
 
 
     public TokenRes refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -323,6 +327,72 @@ public class AuthService {
         userRepository.delete(user);
 
         return ResponseEntity.ok(new CommonRes(true));
+    }
+
+    public ResponseEntity<?> commonJoin(UserReq userReq) {
+        if (userRepository.findByEmail(userReq.getEmail()) != null) {
+            return ResponseEntity.badRequest().body(new ResponseStatusException(UNAUTHORIZED, "Email already in use"));
+        }
+
+        UserEntity user = UserEntity.builder()
+                .email(userReq.getEmail())
+                .name(userReq.getName())
+                .address(userReq.getAddress())
+                .birthday(userReq.getBirthday())
+                .role("ROLE_USER")
+                .loginType("일반")
+                .signedAt(LocalDateTime.now())
+                .phoneNumber(userReq.getPhoneNumber())
+                .password(bCryptPasswordEncoder.encode(userReq.getPassword()))
+                .build();
+        userRepository.save(user);
+
+        KafkaUser kafkaDto = new KafkaUser(
+                user.getUserId(),
+                user.getName(),
+                "", "", user.getRole(),
+                user.getAddress()
+        );
+
+        try {
+            kafkaTemplate.send("createUser", objectMapper.writeValueAsString(kafkaDto));
+        } catch (JsonProcessingException e) {
+            log.error("Kafka 직렬화 실패", e);
+        }
+        return ResponseEntity.ok("User joined");
+    }
+
+    public ResponseEntity<?> commonLogin(UserReq userReq, HttpServletResponse res) {
+        UserEntity user = userRepository.findByEmail(userReq.getEmail()).get();
+        if (user == null) {
+            return ResponseEntity.badRequest().body(new ResponseStatusException(UNAUTHORIZED, "User not found"));
+        }
+
+        if(!bCryptPasswordEncoder.matches(userReq.getPassword(), user.getPassword())){
+            return ResponseEntity.badRequest().body(new ResponseStatusException(UNAUTHORIZED, "Wrong password"));
+        }
+
+
+
+        String refreshToken = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRole(), refreshTokenExp);
+        redisUtil.setRefreshToken(user.getEmail(), refreshToken ,refreshTokenExp);
+
+
+        String cookieValue = "refreshToken=" + refreshToken +
+                "; Max-Age=" + Duration.ofDays(refreshTokenExp).getSeconds() +
+                "; Path=/; HttpOnly; Secure; SameSite=None";
+
+        res.addHeader("Set-Cookie", cookieValue);
+
+        String accessToken = jwtUtil.generateToken(user.getUserId(), user.getEmail() ,user.getRole(),accessTokenExp) ;
+
+        TokenRes tokenRes = new TokenRes();
+        tokenRes.setEmail(user.getEmail());
+        tokenRes.setRole(user.getRole());
+        tokenRes.setToken(accessToken);
+        tokenRes.setLoginType(user.getLoginType());
+
+        return ResponseEntity.ok(tokenRes);
     }
 
 }

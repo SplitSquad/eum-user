@@ -31,12 +31,15 @@ public class UserEntity {
     @Column(nullable = false)
     private Integer deactivateCount = 0;
 
+    @Column(nullable = true)
+    private String loginType;
+
+    private String password;
     private String phoneNumber;
     private String birthday;
     private String profileImagePath;
     private String address;
     private LocalDateTime signedAt;
-    private Boolean isDeactivate;
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private UserPreferenceEntity userPreference;

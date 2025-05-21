@@ -1,5 +1,6 @@
 package com.server1.service;
 
+import com.server1.dto.KafkaDeactivate;
 import com.server1.dto.ReportSimpleRes;
 import com.server1.dto.UserFullRes;
 import com.server1.entity.ReportEntity;
@@ -10,6 +11,7 @@ import com.server1.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import util.JwtUtil;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminService {
 
+    private final KafkaTemplate<String, KafkaDeactivate> kafkaTemplate;
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final RedisUtil redisUtil;
@@ -58,12 +61,15 @@ public class AdminService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        user.setIsDeactivate(true);
         user.setDeactivateCount(user.getDeactivateCount() + 1);
         userRepository.save(user);
 
         redisUtil.setTempDeactivate(user.getEmail(), "true", minutes);
+
+        KafkaDeactivate event = new KafkaDeactivate(user.getUserId(), 1);
+        kafkaTemplate.send("deactivate", event);
     }
+
 
     @Transactional
     public void promoteUserToAdmin(String email, String token) {

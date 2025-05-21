@@ -11,4 +11,7 @@ public class UserReq {
     private String address;
     private String phoneNumber;
     private String birthday;
+    private String email;
+
+    private String password;
 }

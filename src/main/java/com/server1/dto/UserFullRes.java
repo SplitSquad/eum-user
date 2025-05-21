@@ -18,7 +18,7 @@ public class UserFullRes {
     private String profileImagePath;
     private String address;
     private LocalDateTime signedAt;
-    private Boolean isDeactivate;
+    private String loginType;
     private String role;
     private Integer nReported;
     private Integer deactivateCount;
@@ -44,7 +44,7 @@ public class UserFullRes {
                 .profileImagePath(user.getProfileImagePath())
                 .address(user.getAddress())
                 .signedAt(user.getSignedAt())
-                .isDeactivate(user.getIsDeactivate())
+                .loginType(user.getLoginType())
                 .role(user.getRole())
                 .nReported(user.getNReported())
                 .deactivateCount(user.getDeactivateCount())

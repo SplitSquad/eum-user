@@ -73,7 +73,7 @@ public class UserService {
                 user.getProfileImagePath(),
                 user.getAddress(),
                 user.getSignedAt(),
-                user.getIsDeactivate(),
+                user.getLoginType(),
                 user.getRole(),
                 user.getNReported(),
                 user.getDeactivateCount()

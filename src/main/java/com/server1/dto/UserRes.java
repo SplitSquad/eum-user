@@ -19,7 +19,7 @@ public class UserRes {
     private String profileImagePath;
     private String address;
     private LocalDateTime signedAt;
-    private Boolean isDeactivate;
+    private String loginType;
     private String role;
     private Integer nReported;
     private Integer deactivateCount;
@@ -34,7 +34,7 @@ public class UserRes {
                 entity.getProfileImagePath(),
                 entity.getAddress(),
                 entity.getSignedAt(),
-                entity.getIsDeactivate(),
+                entity.getLoginType(),
                 entity.getRole(),
                 entity.getNReported(),
                 entity.getDeactivateCount()

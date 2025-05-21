@@ -3,6 +3,7 @@ package com.server1.controller;
 import com.server1.dto.TokenRes;
 import com.server1.dto.LogoutReq;
 import com.server1.dto.CommonRes;
+import com.server1.dto.UserReq;
 import com.server1.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,5 +45,15 @@ public class AuthController {
     @DeleteMapping("/delete")
     public ResponseEntity<CommonRes> deleteUser(@RequestHeader("Authorization") String accessToken) {
         return authService.deleteUser(accessToken);
+    }
+
+    @PostMapping("/common/join")
+    public ResponseEntity<?> join(@RequestBody UserReq userReq){
+        return authService.commonJoin(userReq);
+    }
+
+    @PostMapping("/common/login")
+    public ResponseEntity<?> login(@RequestBody UserReq userReq, HttpServletResponse res){
+        return authService.commonLogin(userReq, res);
     }
 }
