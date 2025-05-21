@@ -379,7 +379,7 @@ public class AuthService {
     }
 
     public ResponseEntity<?> commonLogin(UserReq userReq, HttpServletResponse res) {
-        UserEntity user = userRepository.findByEmail(userReq.getEmail()).get();
+        UserEntity user = userRepository.findByEmail(userReq.getEmail()).orElse(null);
         if (user == null) {
             return ResponseEntity.badRequest().body("User not found");
         }
