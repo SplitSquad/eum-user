@@ -56,8 +56,15 @@ public class AdminService {
 
     public ReportEntity getReportDetail(Long reportId, String token) {
         validateAdmin(token);
-        return reportRepository.findById(reportId)
+        ReportEntity report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "신고 내역을 찾을 수 없습니다."));
+
+        if (report.getReadStatus() == 0) {
+            report.setReadStatus(1);
+            reportRepository.save(report);
+        }
+
+        return report;
     }
 
     @Transactional
@@ -95,9 +102,11 @@ public class AdminService {
         validateAdmin(token);
         return userRepository.findAll().stream()
                 .map(user -> {
-                    UserPreferenceEntity pref = user.getUserPreference();
-                    return UserFullRes.from(user, pref);
+                    boolean isDeactivated = redisUtil.getTempDeactivate(user.getEmail()) != null;
+                    return UserFullRes.from(user, isDeactivated);
                 })
                 .collect(Collectors.toList());
     }
+
+
 }

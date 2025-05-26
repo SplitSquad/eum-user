@@ -13,13 +13,15 @@ public class ReportSimpleRes {
     private Long reportId;
     private String reportContent;
     private UserEntity reporter;
+    private Integer readStatus;
 
 
     public static ReportSimpleRes from(ReportEntity entity) {
         return new ReportSimpleRes(
                 entity.getReportId(),
                 entity.getReportContent(),
-                entity.getReporter()
+                entity.getReporter(),
+                entity.getReadStatus()
         );
     }
 }

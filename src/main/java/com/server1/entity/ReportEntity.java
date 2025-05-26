@@ -11,7 +11,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ReportEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reportId;
@@ -35,5 +34,8 @@ public class ReportEntity {
 
     @Column(nullable = false)
     private Long contentId;       // 글/댓글 ID
+
+    @Column(nullable = false)
+    private Integer readStatus = 0;
 }
 

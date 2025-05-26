@@ -29,5 +29,8 @@ public class RedisUtil {
     public void setTempDeactivate(String email, String value, int minutes) {
         redisTemplate.opsForValue().set(email + "_deactivate", value, Duration.ofMinutes(minutes));
     }
+    public String getTempDeactivate(String email) {
+        return redisTemplate.opsForValue().get(email + "_deactivate");
+    }
 
 }
