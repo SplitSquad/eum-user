@@ -152,12 +152,19 @@ public class UserService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        String imageUrl = awsS3Service.upload(file); // 분리된 서비스 호출
+        String oldImagePath = user.getProfileImagePath();
+        if (oldImagePath != null && !oldImagePath.isEmpty()) {
+            String oldKey = oldImagePath.substring(oldImagePath.lastIndexOf("/") + 1);
+            awsS3Service.delete(oldKey);
+        }
+
+        String imageUrl = awsS3Service.upload(file);
         user.setProfileImagePath(imageUrl);
         userRepository.save(user);
 
         return imageUrl;
     }
+
 
     @Transactional
     public void deleteCurrentProfileImage(String token) {
