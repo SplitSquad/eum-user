@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import util.JwtUtil;
 
@@ -28,10 +29,13 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final ReportRepository reportRepository;
 
+    private final AwsS3Service awsS3Service;
+
     public UserRes getProfile(String token) {
         Long userId = jwtUtil.getUserid(token);
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+
         return UserRes.from(user);
     }
 
@@ -142,4 +146,27 @@ public class UserService {
         userRepository.save(reported);
     }
 
+    @Transactional
+    public String updateProfileImage(String token, MultipartFile file) {
+        Long userId = jwtUtil.getUserid(token);
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+
+        String imageUrl = awsS3Service.upload(file); // 분리된 서비스 호출
+        user.setProfileImagePath(imageUrl);
+        userRepository.save(user);
+
+        return imageUrl;
+    }
+
+    @Transactional
+    public void deleteProfileImage(String token, String key) {
+        Long userId = jwtUtil.getUserid(token);
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+
+        awsS3Service.delete(key);
+        user.setProfileImagePath(null); // 또는 ""로
+        userRepository.save(user);
+    }
 }

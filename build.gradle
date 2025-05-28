@@ -55,6 +55,10 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
+    implementation platform('software.amazon.awssdk:bom:2.20.147') // AWS SDK BOM
+    implementation 'software.amazon.awssdk:s3' // S3 클라이언트
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // 파일 유효성 검증에 사용
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
