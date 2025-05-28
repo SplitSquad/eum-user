@@ -60,10 +60,9 @@ public class UserController {
 
     @DeleteMapping("image/delete")
     public ResponseEntity<Void> deleteProfileImage(
-            @RequestHeader("Authorization") String token,
-            @RequestParam("key") String key
+            @RequestHeader("Authorization") String token
     ) {
-        userService.deleteProfileImage(token, key);
+        userService.deleteCurrentProfileImage(token);
         return ResponseEntity.ok().build();
     }
 }

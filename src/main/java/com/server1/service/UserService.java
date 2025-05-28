@@ -160,13 +160,18 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteProfileImage(String token, String key) {
+    public void deleteCurrentProfileImage(String token) {
         Long userId = jwtUtil.getUserid(token);
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
 
-        awsS3Service.delete(key);
-        user.setProfileImagePath(null); // 또는 ""로
-        userRepository.save(user);
+        String profileImagePath = user.getProfileImagePath();
+        if (profileImagePath != null && !profileImagePath.isEmpty()) {
+            String key = profileImagePath.substring(profileImagePath.lastIndexOf("/") + 1);
+            awsS3Service.delete(key);
+            user.setProfileImagePath(null);
+            userRepository.save(user);
+        }
     }
+
 }
