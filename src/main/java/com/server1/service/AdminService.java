@@ -3,12 +3,14 @@ package com.server1.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server1.dto.KafkaDeactivate;
+import com.server1.dto.KafkaUser;
 import com.server1.dto.ReportSimpleRes;
 import com.server1.dto.UserFullRes;
 import com.server1.entity.ReportEntity;
 import com.server1.entity.UserEntity;
 import com.server1.entity.UserPreferenceEntity;
 import com.server1.repository.ReportRepository;
+import com.server1.repository.UserPreferenceRepository;
 import com.server1.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 public class AdminService {
     private static final Logger log = LoggerFactory.getLogger(AdminService.class);
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final UserPreferenceRepository prefRepository;
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
@@ -90,12 +93,32 @@ public class AdminService {
     @Transactional
     public void promoteUserToAdmin(String email, String token) {
         validateAdmin(token);
+
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         user.setRole("ROLE_ADMIN");
         userRepository.save(user);
+
+        UserPreferenceEntity pref = prefRepository.findByUser(user)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "선호 정보 없음"));
+
+        KafkaUser kafkaDto = new KafkaUser(
+                user.getUserId(),
+                user.getName(),
+                pref.getLanguage(),
+                pref.getNation(),
+                user.getRole(),
+                user.getAddress()
+        );
+
+        try {
+            kafkaTemplate.send("updateUserRole", objectMapper.writeValueAsString(kafkaDto));
+        } catch (JsonProcessingException e) {
+            log.error("Kafka 직렬화 실패", e);
+        }
     }
+
 
     @Transactional
     public List<UserFullRes> getAllUserInfos(String token) {
