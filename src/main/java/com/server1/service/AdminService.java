@@ -113,11 +113,13 @@ public class AdminService {
         );
 
         try {
-            kafkaTemplate.send("updateUserRole", objectMapper.writeValueAsString(kafkaDto));
+            kafkaTemplate.send("updateUser", objectMapper.writeValueAsString(kafkaDto));
         } catch (JsonProcessingException e) {
             log.error("Kafka 직렬화 실패", e);
         }
     }
+
+
 
 
     @Transactional
