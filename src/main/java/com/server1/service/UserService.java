@@ -139,6 +139,7 @@ public class UserService {
                         .serviceType(req.getServiceType())
                         .targetType(req.getTargetType())
                         .contentId(req.getContentId())
+                        .readStatus(0)
                         .build()
         );
 
